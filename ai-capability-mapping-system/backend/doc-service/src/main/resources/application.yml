@@ -1,0 +1,32 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: doc-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  redis:
+    host: localhost
+    port: 6379
+  datasource:
+    url: jdbc:mysql://localhost:3306/ai_capability_mapping
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: documents
+
+ollama:
+  base-url: http://localhost:11434
+  model: qwen2.5:7b-instruct
+
+paddleocr:
+  url: http://localhost:8866

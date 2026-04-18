@@ -1,0 +1,15 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: graph-service
+  data:
+    neo4j:
+      uri: bolt://localhost:7687
+      username: neo4j
+      password: neo4j123
+
+neo4j:
+  connection-timeout: 30000
+  max-connection-pool-size: 10

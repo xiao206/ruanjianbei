@@ -1,0 +1,57 @@
+# Galaxy Kylin OS 适配配置
+
+# 编码配置
+spring:
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  messages:
+    encoding: UTF-8
+
+# 时区配置
+server:
+  tomcat:
+    uri-encoding: UTF-8
+
+# 本地化配置
+spring:
+  messages:
+    basename: i18n/messages
+    fallback-to-system-locale: false
+    cache-duration: -1
+
+# 数据库适配 - 达梦 DM8
+spring:
+  datasource:
+    url: jdbc:dm://localhost:5236/ai_capability_mapping
+    username: SYSDBA
+    password: SYSDBA
+    driver-class-name: dm.jdbc.driver.DmDriver
+
+# 国密算法配置
+security:
+  sm:
+    enabled: true
+    sm2:
+      enabled: true
+    sm3:
+      enabled: true
+    sm4:
+      enabled: true
+
+# JVM 优化配置
+jvm:
+  opts: "-Xms2g -Xmx4g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+# 系统配置
+system:
+  os:
+    type: kylin
+    version: v10
+  cpu:
+    architecture: arm64
+  locale:
+    language: zh_CN
+    encoding: UTF-8

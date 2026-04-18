@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: doc-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/document/**
+        - id: graph-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/graph/**
+        - id: match-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/match/**
+        - id: admin-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/admin/**
+        - id: auth-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/auth/**
+
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  active-timeout: 86400
