@@ -44,7 +44,7 @@ const loadGraph = async () => {
     if (graphType.value === 'person') {
       url = `/api/v1/graph/person/${entityId.value}`
     } else {
-      url = `/api/v1/graph/requirement/${entityId.value}`
+      url = `/api/v1/graph/job/${entityId.value}`
     }
     
     const response = await fetch(url)

@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ai-capability-mapping-system
+  datasource:
+    url: jdbc:dm://localhost:5236/AI_CAPABILITY_MAPPING
+    username: SYSDBA
+    password: SYSDBA
+    driver-class-name: dm.jdbc.driver.DmDriver
+  data:
+    neo4j:
+      uri: bolt://localhost:7687
+      username: neo4j
+      password: neo4j123
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.trae.monoservice.entity
+
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  active-timeout: 86400
+
+neo4j:
+  connection-timeout: 30000
+  max-connection-pool-size: 10
+
+milvus:
+  host: localhost
+  port: 19530
+  collection:
+    skill_vectors: skill_vectors
+    requirement_vectors: requirement_vectors
+
+ollama:
+  base-url: http://localhost:11434
+  model: qwen2.5:3b-instruct
+  embedding-model: bge-m3
+
+rapidocr:
+  url: http://localhost:8000
+  timeout: 30000
+
+# 资源限制配置
+system:
+  max-file-size: 50MB
+  thread-pool-size: 4

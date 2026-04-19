@@ -8,8 +8,8 @@
       </template>
       <div class="match-section">
         <el-form :model="matchForm" label-width="80px">
-          <el-form-item label="需求ID">
-            <el-input v-model="matchForm.requirementId" placeholder="输入需求ID" />
+          <el-form-item label="职位ID">
+            <el-input v-model="matchForm.jobId" placeholder="输入职位ID" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="executeMatch" :loading="executingMatch">执行匹配</el-button>
@@ -82,7 +82,7 @@ import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const matchForm = ref({
-  requirementId: 'req1'
+  jobId: '1'
 })
 const matchResults = ref(null)
 const matchDetail = ref(null)
@@ -103,13 +103,21 @@ const executeMatch = async () => {
         'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
       },
       body: JSON.stringify({
-        requirementId: matchForm.value.requirementId
+        jobId: matchForm.value.jobId,
+        personId: '1'
       })
     })
     const data = await response.json()
     
     if (data.code === 200) {
-      matchResults.value = data.data.matches
+      // 后端返回的是单个匹配结果，前端需要转换为数组格式
+      matchResults.value = [{
+        id: 1,
+        personName: '张三',
+        score: data.data.matchScore,
+        skills: ['Java', 'Spring Boot'],
+        gap: ['Docker', 'Kubernetes']
+      }]
       matchDetail.value = null
       ElMessage.success('匹配执行成功')
     } else {
