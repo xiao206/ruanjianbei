@@ -125,6 +125,6 @@ router.post('/match/execute', (req, res) => {
 
 app.use('/v1', router);
 
-app.listen(8080, () => {
-  console.log('Mock server listening on port 8080');
+app.listen(8080, '127.0.0.1', () => {
+  console.log('Mock server listening on port 8080 (127.0.0.1)');
 });
