@@ -105,13 +105,33 @@ const renderGraph = async (graphData) => {
 
   if (!graphRef.value) return
 
+  const nodeCount = graphData?.nodes?.length ?? 0
+  const forceLayout = nodeCount > 300
+    ? {
+        type: 'force',
+        animation: true,
+        enableWorker: true,
+        iterations: 120,
+        preventOverlap: false,
+        linkDistance: 80
+      }
+    : {
+        type: 'force',
+        animation: true,
+        enableWorker: true,
+        iterations: 200,
+        preventOverlap: true,
+        collideStrength: 0.5,
+        linkDistance: 120
+      }
+
   graph.value = new Graph({
     container: graphRef.value,
     autoResize: true,
     data: graphData,
     behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
     layout: currentLayout.value === 'force'
-      ? { type: 'force', preventOverlap: true, linkDistance: 120 }
+      ? forceLayout
       : { type: 'dagre', rankdir: 'TB' },
     node: {
       style: (d) => {
