@@ -8,8 +8,8 @@
       </template>
       <div class="match-section">
         <el-form :model="matchForm" label-width="80px">
-          <el-form-item label="职位ID">
-            <el-input v-model="matchForm.jobId" placeholder="输入职位ID" />
+          <el-form-item label="需求ID">
+            <el-input v-model="matchForm.requirementId" placeholder="输入需求ID" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="executeMatch" :loading="executingMatch">执行匹配</el-button>
@@ -17,7 +17,7 @@
         </el-form>
       </div>
       
-      <div v-if="matchResults" class="results-section">
+      <div class="results-section">
         <el-divider>匹配结果</el-divider>
         <el-card shadow="hover">
           <el-table :data="matchResults" style="width: 100%" v-loading="executingMatch">
@@ -27,20 +27,24 @@
             <el-table-column prop="personName" label="人才姓名" width="120" />
             <el-table-column label="匹配度" width="100">
               <template #default="scope">
-                <el-progress :percentage="scope.row.score * 100" :color="getScoreColor(scope.row.score)" />
+                <el-progress :percentage="Math.round(scope.row.score * 100)" :color="getScoreColor(scope.row.score)" />
               </template>
             </el-table-column>
-            <el-table-column prop="score" label="匹配分数" width="100" />
-            <el-table-column prop="skills" label="匹配技能">
+            <el-table-column label="匹配分数" width="100">
               <template #default="scope">
-                <el-tag v-for="skill in scope.row.skills" :key="skill" size="small" style="margin-right: 5px">
+                {{ Math.round(scope.row.score * 100) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="匹配技能">
+              <template #default="scope">
+                <el-tag v-for="skill in scope.row.matchSkills" :key="skill" size="small" style="margin-right: 5px">
                   {{ skill }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="gap" label="技能差距">
+            <el-table-column label="技能差距">
               <template #default="scope">
-                <el-tag v-for="skill in scope.row.gap" :key="skill" size="small" type="danger" style="margin-right: 5px">
+                <el-tag v-for="skill in scope.row.gapSkills" :key="skill" size="small" type="danger" style="margin-right: 5px">
                   {{ skill }}
                 </el-tag>
               </template>
@@ -68,11 +72,11 @@
               </el-table>
             </el-tab-pane>
             <el-tab-pane label="学习路径">
-              <el-list>
-                <el-list-item v-for="(item, index) in matchDetail.learningPath" :key="index">
+              <el-timeline>
+                <el-timeline-item v-for="(item, index) in matchDetail.learningPath" :key="index">
                   {{ item }}
-                </el-list-item>
-              </el-list>
+                </el-timeline-item>
+              </el-timeline>
             </el-tab-pane>
           </el-tabs>
         </el-card>
@@ -107,26 +111,41 @@ const executeMatch = async () => {
       {
         personId: 'user_001',
         personName: '张三',
-        score: 95,
+        score: 0.95,
         matchSkills: ['Java', 'Spring Boot', 'MySQL', 'Redis'],
         gapSkills: ['Python', 'Go'],
-        learningPath: '建议学习Python基础语法及Django框架，补充多语言开发能力。'
+        learningPath: [
+          '学习 Python 基础语法与工程化',
+          '掌握 Django/FastAPI 其中一个框架',
+          '补齐 Go 基础与并发模型',
+          '完成 1 个中小型实战项目巩固'
+        ]
       },
       {
         personId: 'user_002',
         personName: '李四',
-        score: 82,
+        score: 0.82,
         matchSkills: ['Java', 'MySQL'],
         gapSkills: ['Spring Boot', 'Redis', 'Python'],
-        learningPath: '建议深入学习Spring Boot微服务架构及Redis缓存中间件，提升后端系统设计能力。'
+        learningPath: [
+          '学习 Spring Boot 与常用组件',
+          '掌握 Redis 缓存与分布式锁',
+          '了解微服务基础（注册中心、配置中心、网关）',
+          '通过项目落地巩固'
+        ]
       },
       {
         personId: 'user_003',
         personName: '王五',
-        score: 65,
+        score: 0.65,
         matchSkills: ['Python', 'MySQL'],
         gapSkills: ['Java', 'Spring Boot', 'Redis', 'Go'],
-        learningPath: '该候选人主要技能栈为Python，与当前Java后端需求差距较大，建议系统学习Java生态。'
+        learningPath: [
+          '系统学习 Java 语法与集合/并发',
+          '入门 Spring Boot（Web/DI/配置）',
+          '学习 Redis/MySQL 性能优化',
+          '完成 Java 后端项目实战'
+        ]
       }
     ]
     ElMessage.success('匹配完成')
@@ -164,17 +183,17 @@ const getScoreColor = (score) => {
 
 const skillMatchData = ref([])
 
-// 监听匹配详情变化，更新技能匹配数据
 watch(() => matchDetail.value, (newDetail) => {
-  if (newDetail && newDetail.skillMatch) {
-    skillMatchData.value = Object.entries(newDetail.skillMatch).map(([skill, level]) => ({
-      skill,
-      level
-    }))
-  } else {
+  if (!newDetail) {
     skillMatchData.value = []
+    return
   }
-}, { deep: true })
+
+  skillMatchData.value = (newDetail.skills || []).map(skill => ({
+    skill,
+    level: '匹配'
+  }))
+})
 </script>
 
 <style scoped>
