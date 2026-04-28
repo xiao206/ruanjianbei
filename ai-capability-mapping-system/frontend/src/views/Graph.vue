@@ -98,11 +98,6 @@ const buildMockGraphData = ({ graphType, entityId }) => {
 }
 
 const renderGraph = async (graphData) => {
-  if (graph.value) {
-    graph.value.destroy()
-    graph.value = null
-  }
-
   if (!graphRef.value) return
 
   const nodeCount = graphData?.nodes?.length ?? 0
@@ -110,45 +105,47 @@ const renderGraph = async (graphData) => {
     ? { type: 'grid', sortBy: 'id' }
     : { type: 'grid' }
 
-  graph.value = new Graph({
-    container: graphRef.value,
-    autoResize: true,
-    data: graphData,
-    behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
-    layout: currentLayout.value === 'grid'
-      ? gridLayout
-      : { type: 'dagre', rankdir: 'TB' },
-    node: {
-      style: (d) => {
-        const base = {
-          size: 28,
-          labelText: d.name || d.id,
-          labelPlacement: 'bottom',
-          labelOffsetY: 8,
-          labelFill: '#333',
-          labelFontSize: 12,
-          lineWidth: 2,
-          fill: '#C6E5FF',
-          stroke: '#1890FF'
+  if (!graph.value) {
+    graph.value = new Graph({
+      container: graphRef.value,
+      autoResize: true,
+      devicePixelRatio: 1,
+      data: { nodes: [], edges: [] },
+      behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
+      node: {
+        style: (d) => {
+          const base = {
+            size: 28,
+            labelText: d.name || d.id,
+            labelPlacement: 'bottom',
+            labelOffsetY: 8,
+            labelFill: '#333',
+            labelFontSize: 12,
+            lineWidth: 2,
+            fill: '#C6E5FF',
+            stroke: '#1890FF'
+          }
+          if (d.label === 'Person') return { ...base, fill: '#FFE58F', stroke: '#FAAD14' }
+          if (d.label === 'Skill') return { ...base, fill: '#B7EB8F', stroke: '#52C41A' }
+          if (d.label === 'Requirement') return { ...base, fill: '#FFD6E7', stroke: '#EB2F96' }
+          return base
         }
-        if (d.label === 'Person') return { ...base, fill: '#FFE58F', stroke: '#FAAD14' }
-        if (d.label === 'Skill') return { ...base, fill: '#B7EB8F', stroke: '#52C41A' }
-        if (d.label === 'Requirement') return { ...base, fill: '#FFD6E7', stroke: '#EB2F96' }
-        return base
+      },
+      edge: {
+        style: (d) => ({
+          stroke: d.label === 'HAS_SKILL' ? '#1890FF' : '#999',
+          lineWidth: d.label === 'HAS_SKILL' ? 2 : 1,
+          endArrow: true,
+          labelText: d.label || '',
+          labelFill: '#666',
+          labelFontSize: 10
+        })
       }
-    },
-    edge: {
-      style: (d) => ({
-        stroke: d.label === 'HAS_SKILL' ? '#1890FF' : '#999',
-        lineWidth: d.label === 'HAS_SKILL' ? 2 : 1,
-        endArrow: true,
-        labelText: d.label || '',
-        labelFill: '#666',
-        labelFontSize: 10
-      })
-    }
-  })
+    })
+  }
 
+  graph.value.setLayout(currentLayout.value === 'grid' ? gridLayout : { type: 'dagre', rankdir: 'TB' })
+  graph.value.setData(graphData)
   await graph.value.render()
 }
 
