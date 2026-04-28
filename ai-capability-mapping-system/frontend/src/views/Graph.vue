@@ -111,7 +111,11 @@ const renderGraph = async (graphData) => {
       autoResize: true,
       devicePixelRatio: 1,
       data: { nodes: [], edges: [] },
-      behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
+      behaviors: [
+        { type: 'drag-canvas' },
+        { type: 'zoom-canvas' },
+        { type: 'drag-element', shadow: true, hideEdge: 'all' }
+      ],
       node: {
         style: (d) => {
           const base = {
