@@ -10,9 +10,12 @@
         <el-tab-pane label="用户管理">
           <div class="tab-content">
             <el-button type="primary" @click="addUser">添加用户</el-button>
-            <el-table :data="users" style="width: 100%" :loading="loadingUsers">
-              <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="username" label="用户名" width="120" />
+            <el-table :data="users" style="width: 100%" v-loading="loadingUsers">
+            <template #empty>
+              <el-empty description="暂无用户数据" />
+            </template>
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="username" label="用户名" width="150" />
               <el-table-column prop="name" label="姓名" width="120" />
               <el-table-column prop="role" label="角色" width="100" />
               <el-table-column prop="dept" label="部门" width="120" />
@@ -96,15 +99,14 @@ const loadingSkills = ref(false)
 const loadUsers = async () => {
   loadingUsers.value = true
   try {
-    const response = await fetch('/api/v1/admin/users')
-    const data = await response.json()
-    if (data.code === 200) {
-      users.value = data.data.users
-    } else {
-      ElMessage.error('获取用户列表失败: ' + data.message)
-    }
+    await new Promise(resolve => setTimeout(resolve, 600))
+    users.value = [
+      { id: 1, username: 'admin', name: '系统管理员', role: 'admin', status: 'active', createTime: '2026-04-28' },
+      { id: 2, username: 'user1', name: '张三', role: 'user', status: 'active', createTime: '2026-04-28' },
+      { id: 3, username: 'user2', name: '李四', role: 'user', status: 'inactive', createTime: '2026-04-28' }
+    ]
   } catch (error) {
-    ElMessage.error('网络错误: ' + error.message)
+    ElMessage.error('加载用户失败')
   } finally {
     loadingUsers.value = false
   }
@@ -113,15 +115,14 @@ const loadUsers = async () => {
 const loadSkills = async () => {
   loadingSkills.value = true
   try {
-    const response = await fetch('/api/v1/admin/skills')
-    const data = await response.json()
-    if (data.code === 200) {
-      skills.value = data.data.skills
-    } else {
-      ElMessage.error('获取技能列表失败: ' + data.message)
-    }
+    await new Promise(resolve => setTimeout(resolve, 600))
+    skills.value = [
+      { id: 101, name: 'Java', category: '后端开发', level: '专家', description: '熟练掌握JVM、Spring框架等' },
+      { id: 102, name: 'Vue 3', category: '前端开发', level: '高级', description: '熟练掌握Composition API等' },
+      { id: 103, name: 'Python', category: '算法/后端', level: '中级', description: '熟悉基础语法与常用库' }
+    ]
   } catch (error) {
-    ElMessage.error('网络错误: ' + error.message)
+    ElMessage.error('加载技能失败')
   } finally {
     loadingSkills.value = false
   }
@@ -129,37 +130,71 @@ const loadSkills = async () => {
 
 const loadMonitorData = async () => {
   try {
-    const response = await fetch('/api/v1/admin/monitor')
-    const data = await response.json()
-    if (data.code === 200) {
-      monitorData.value = data.data
-    } else {
-      ElMessage.error('获取监控数据失败: ' + data.message)
+    await new Promise(resolve => setTimeout(resolve, 600))
+    monitorData.value = {
+      services: [
+        { name: 'Gateway Service', status: 'up' },
+        { name: 'Auth Service', status: 'up' },
+        { name: 'Document Service', status: 'up' },
+        { name: 'Graph Service', status: 'up' }
+      ],
+      databases: [
+        { name: 'MySQL / DM8', status: 'up' },
+        { name: 'Neo4j', status: 'up' },
+        { name: 'Milvus', status: 'up' },
+        { name: 'Redis', status: 'up' }
+      ],
+      aiModels: [
+        { name: 'Ollama (LLM)', status: 'up' },
+        { name: 'BGE-M3 (Embedding)', status: 'up' }
+      ]
     }
   } catch (error) {
-    ElMessage.error('网络错误: ' + error.message)
+    ElMessage.error('加载监控数据失败')
   }
 }
 
 const addUser = () => {
-  ElMessage.info('添加用户功能开发中')
+  ElMessageBox.prompt('请输入新用户名', '添加用户', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(({ value }) => {
+    if (value) {
+      users.value.push({
+        id: users.value.length + 1,
+        username: value,
+        name: '测试用户',
+        role: 'user',
+        status: 'active'
+      })
+      ElMessage.success('用户添加成功 (Mock)')
+    }
+  }).catch(() => {})
 }
 
 const editUser = (user) => {
-  ElMessage.info('编辑用户功能开发中')
+  ElMessageBox.prompt('修改用户名', '编辑用户', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputValue: user.username
+  }).then(({ value }) => {
+    if (value) {
+      const target = users.value.find(u => u.id === user.id)
+      if (target) target.username = value
+      ElMessage.success('用户信息已更新 (Mock)')
+    }
+  }).catch(() => {})
 }
 
 const deleteUser = (userId) => {
-  ElMessageBox.confirm('确定要删除此用户吗？', '提示', {
+  ElMessageBox.confirm(`确定要删除此用户吗？`, '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    ElMessage.success('删除成功')
-    loadUsers()
-  }).catch(() => {
-    // 取消删除
-  })
+    users.value = users.value.filter(u => u.id !== userId)
+    ElMessage.success('用户已删除 (Mock)')
+  }).catch(() => {})
 }
 
 const addSkill = () => {

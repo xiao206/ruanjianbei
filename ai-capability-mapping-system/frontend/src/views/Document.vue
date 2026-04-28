@@ -10,16 +10,14 @@
         <el-upload
           class="upload-demo"
           drag
-          action="/api/v1/document/upload"
-          :headers="{ Authorization: 'Bearer ' + token }"
-          :data="{ type: 'resume' }"
-          :on-success="handleUploadSuccess"
-          :on-error="handleUploadError"
-          :file-list="fileList"
+          action="#"
+          :auto-upload="false"
+          :on-change="handleFileChange"
+          :show-file-list="false"
         >
           <el-icon class="el-icon--upload"><upload-filled /></el-icon>
           <div class="el-upload__text">
-            拖拽文件到此处，或 <em>点击上传</em>
+            将文件拖到此处，或 <em>点击选择文件</em>
           </div>
           <template #tip>
             <div class="el-upload__tip">
@@ -69,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -81,6 +79,8 @@ const checkingStatus = ref(false)
 const gettingResult = ref(false)
 
 const token = localStorage.getItem('token') || ''
+
+let pollingTimer = null
 
 const statusType = computed(() => {
   switch (parseStatus.value) {
@@ -103,55 +103,75 @@ const statusText = computed(() => {
 
 const canGetResult = computed(() => parseStatus.value === 'completed')
 
-const handleUploadSuccess = (response) => {
-  if (response.code === 200) {
-    uploadedFile.value = response.data
-    parseStatus.value = response.data.status
-    ElMessage.success('文件上传成功')
-  } else {
-    ElMessage.error('文件上传失败: ' + response.message)
+const handleFileChange = (file) => {
+  const isLt50M = file.size / 1024 / 1024 < 50
+  if (!isLt50M) {
+    ElMessage.error('上传文件大小不能超过 50MB!')
+    return false
   }
+
+  // 模拟上传成功
+  ElMessage.success('文件上传成功，正在开始解析...')
+  uploadedFile.value = {
+    id: 'mock-doc-' + Date.now(),
+    fileName: file.name
+  }
+  parseStatus.value = 'processing'
+  parseResult.value = null
+
+  // 自动开始轮询状态
+  startPolling()
 }
 
-const handleUploadError = (error) => {
-  ElMessage.error('文件上传失败: ' + error.message)
+const startPolling = () => {
+  if (pollingTimer) clearInterval(pollingTimer)
+  checkingStatus.value = true
+  
+  let mockProgress = 0
+  pollingTimer = setInterval(() => {
+    mockProgress += 20
+    if (mockProgress >= 100) {
+      clearInterval(pollingTimer)
+      checkingStatus.value = false
+      parseStatus.value = 'completed'
+      ElMessage.success('解析已完成')
+      getResult()
+    }
+  }, 1000)
 }
 
 const checkStatus = async () => {
   if (!uploadedFile.value) return
-  
-  checkingStatus.value = true
-  try {
-    const response = await fetch(`/api/v1/document/${uploadedFile.value.id}/status`)
-    const data = await response.json()
-    if (data.code === 200) {
-      parseStatus.value = data.data.status
-      ElMessage.success('状态更新成功')
-    } else {
-      ElMessage.error('获取状态失败: ' + data.message)
-    }
-  } catch (error) {
-    ElMessage.error('网络错误: ' + error.message)
-  } finally {
-    checkingStatus.value = false
+  if (parseStatus.value === 'completed') {
+    ElMessage.success('解析已完成')
+    return
   }
+  ElMessage.info('解析正在进行中，请稍后...')
 }
 
 const getResult = async () => {
-  if (!uploadedFile.value) return
+  if (!uploadedFile.value || parseStatus.value !== 'completed') return
   
   gettingResult.value = true
   try {
-    const response = await fetch(`/api/v1/document/${uploadedFile.value.id}/result`)
-    const data = await response.json()
-    if (data.code === 200) {
-      parseResult.value = data.data
-      ElMessage.success('获取结果成功')
-    } else {
-      ElMessage.error('获取结果失败: ' + data.message)
+    // 模拟网络延迟
+    await new Promise(resolve => setTimeout(resolve, 800))
+    parseResult.value = {
+      skills: [
+        { name: 'Java', level: '专家' },
+        { name: 'Spring Boot', level: '熟练' },
+        { name: 'Vue.js', level: '掌握' },
+        { name: 'MySQL', level: '熟练' }
+      ],
+      projects: [
+        '基于微服务架构的电商后台管理系统',
+        'AI能力图谱与智能匹配平台研发'
+      ],
+      education: '计算机科学与技术 本科',
+      experience: '5年 Java 后端开发经验'
     }
   } catch (error) {
-    ElMessage.error('网络错误: ' + error.message)
+    ElMessage.error('获取解析结果失败')
   } finally {
     gettingResult.value = false
   }
@@ -159,18 +179,19 @@ const getResult = async () => {
 
 const skillTableData = computed(() => {
   if (!parseResult.value || !parseResult.value.skills) return []
-  return Object.entries(parseResult.value.skills).map(([name, level]) => ({
-    name,
-    level
-  }))
+  return parseResult.value.skills
 })
 
 const projectTableData = computed(() => {
   if (!parseResult.value || !parseResult.value.projects) return []
-  return Object.entries(parseResult.value.projects).map(([name, description]) => ({
-    name,
-    description
+  return parseResult.value.projects.map(p => ({
+    name: p,
+    description: '项目描述暂无'
   }))
+})
+
+onUnmounted(() => {
+  if (pollingTimer) clearInterval(pollingTimer)
 })
 </script>
 

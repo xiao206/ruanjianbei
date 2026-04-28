@@ -44,43 +44,43 @@ const loginForm = reactive({
 
 const loginRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能小于 6 位', trigger: 'blur' }
   ]
 }
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  
+
   await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
       try {
-        const response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: loginForm.username,
-            password: loginForm.password
-          })
-        })
-        const data = await response.json()
+        // Mock 登录逻辑
+        await new Promise(resolve => setTimeout(resolve, 800))
         
-        if (data.code === 200) {
-          // 保存 token 和用户信息
-          localStorage.setItem('token', data.data.token)
-          localStorage.setItem('user', JSON.stringify(data.data.user))
-          ElMessage.success('登录成功')
-          router.push('/')
+        let mockUser = null
+        if (loginForm.username === 'admin' && loginForm.password === 'admin123') {
+          mockUser = { id: 1, username: 'admin', userType: 'admin', role: 'admin' }
+        } else if (loginForm.username === 'user1' && loginForm.password === 'user123') {
+          mockUser = { id: 2, username: 'user1', userType: 'user', role: 'user' }
         } else {
-          ElMessage.error('登录失败: ' + data.message)
+          throw new Error('用户名或密码错误 (请使用测试账号)')
         }
+
+        localStorage.setItem('token', 'mock-token-' + Date.now())
+        localStorage.setItem('user', JSON.stringify(mockUser))
+        
+        ElMessage.success('登录成功')
+        // 强制触发事件让App.vue响应
+        window.dispatchEvent(new Event('storage'))
+        router.push('/')
       } catch (error) {
-        ElMessage.error('网络错误: ' + error.message)
+        ElMessage.error(error.message)
       } finally {
         loading.value = false
       }

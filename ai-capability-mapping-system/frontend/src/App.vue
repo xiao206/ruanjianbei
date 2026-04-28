@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -49,9 +49,10 @@ const isAdmin = ref(false)
 const isLoginPage = computed(() => route.path === '/login')
 
 watch(() => route.path, (newPath) => {
-  const path = newPath.substring(1) || 'home'
+  const path = newPath.split('/')[1] || 'home'
   activeMenu.value = path
-})
+  checkLoginStatus()
+}, { immediate: true })
 
 const handleMenuSelect = (key) => {
   router.push(`/${key}`)
@@ -71,12 +72,23 @@ const checkLoginStatus = () => {
   const token = localStorage.getItem('token')
   if (token) {
     isLoggedIn.value = true
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    isAdmin.value = user.role === 'admin'
+    try {
+      const userStr = localStorage.getItem('user')
+      const user = userStr ? JSON.parse(userStr) : {}
+      isAdmin.value = user.userType === 'admin' || user.role === 'admin'
+    } catch (e) {
+      console.error('Failed to parse user data:', e)
+      isAdmin.value = false
+    }
+  } else {
+    isLoggedIn.value = false
+    isAdmin.value = false
   }
 }
 
-checkLoginStatus()
+onMounted(() => {
+  checkLoginStatus()
+})
 </script>
 
 <style>
