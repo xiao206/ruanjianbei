@@ -30,8 +30,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import G6 from '@antv/g6'
+import { ref, onMounted, onUnmounted } from 'vue'
+import * as G6 from '@antv/g6'
 import { ElMessage } from 'element-plus'
 
 const graphRef = ref(null)
