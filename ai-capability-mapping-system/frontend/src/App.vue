@@ -4,7 +4,16 @@
       <el-header v-if="!isLoginPage">
         <div class="header-content">
           <h1 class="app-title">AI 智能匹配与能力图谱系统</h1>
-          <el-menu :default-active="activeMenu" class="el-menu-demo" mode="horizontal" @select="handleMenuSelect">
+          <el-menu 
+            :default-active="activeMenu" 
+            class="el-menu-demo" 
+            mode="horizontal" 
+            @select="handleMenuSelect"
+            background-color="transparent"
+            text-color="#fff"
+            active-text-color="#fff"
+            :ellipsis="false"
+          >
             <el-menu-item index="home">首页</el-menu-item>
             <el-menu-item index="document">文档解析</el-menu-item>
             <el-menu-item index="graph">能力图谱</el-menu-item>
@@ -90,10 +99,13 @@ checkLoginStatus()
   margin: 0;
   font-size: 20px;
   font-weight: bold;
+  margin-right: 40px;
 }
 
 .el-menu-demo {
   border-bottom: none;
+  flex-grow: 1;
+  justify-content: flex-end;
 }
 
 .el-menu-demo .el-menu-item {
