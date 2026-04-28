@@ -38,7 +38,7 @@ const graphRef = ref(null)
 const graph = ref(null)
 const graphType = ref('person')
 const entityId = ref('person1')
-const currentLayout = ref('force')
+const currentLayout = ref('dagre')
 const loading = ref(false)
 
 const loadGraph = async () => {
@@ -106,30 +106,17 @@ const renderGraph = async (graphData) => {
   if (!graphRef.value) return
 
   const nodeCount = graphData?.nodes?.length ?? 0
-  const forceLayout = nodeCount > 300
-    ? {
-        type: 'force',
-        animation: true,
-        iterations: 120,
-        preventOverlap: false,
-        linkDistance: 80
-      }
-    : {
-        type: 'force',
-        animation: true,
-        iterations: 200,
-        preventOverlap: true,
-        collideStrength: 0.5,
-        linkDistance: 120
-      }
+  const gridLayout = nodeCount > 300
+    ? { type: 'grid', sortBy: 'id' }
+    : { type: 'grid' }
 
   graph.value = new Graph({
     container: graphRef.value,
     autoResize: true,
     data: graphData,
     behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
-    layout: currentLayout.value === 'force'
-      ? forceLayout
+    layout: currentLayout.value === 'grid'
+      ? gridLayout
       : { type: 'dagre', rankdir: 'TB' },
     node: {
       style: (d) => {
@@ -184,11 +171,7 @@ const resetLayout = () => {
 }
 
 const switchLayout = () => {
-  if (currentLayout.value === 'force') {
-    currentLayout.value = 'dagre'
-  } else {
-    currentLayout.value = 'force'
-  }
+  currentLayout.value = currentLayout.value === 'dagre' ? 'grid' : 'dagre'
   loadGraph()
 }
 
