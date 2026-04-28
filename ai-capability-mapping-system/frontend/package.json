@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "mock": "node mock-server.js",
+    "dev:mock": "concurrently \"npm run mock\" \"npm run dev -- --host 0.0.0.0\"",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
     "body-parser": "^2.2.2",
+    "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "unocss": "^0.58.0",
