@@ -22,7 +22,7 @@
           <el-button size="small" @click="switchLayout">切换布局</el-button>
         </div>
         <div ref="graphRef" class="graph-canvas" v-loading="loading">
-          <el-empty v-if="!graph && !loading" description="请点击上方按钮加载图谱" />
+          <el-empty v-if="!graph && !loading" description="请输入实体ID后点击加载图谱" />
         </div>
       </div>
     </el-card>
@@ -30,8 +30,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import * as G6 from '@antv/g6'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { Graph } from '@antv/g6'
 import { ElMessage } from 'element-plus'
 
 const graphRef = ref(null)
@@ -42,169 +42,147 @@ const currentLayout = ref('force')
 const loading = ref(false)
 
 const loadGraph = async () => {
-  if (!entityId.value) {
-    ElMessage.warning('请输入要查询的实体 ID')
+  const id = String(entityId.value || '').trim()
+  if (!id) {
+    ElMessage.warning('请输入实体ID')
     return
   }
+
+  loading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    const mockData = {
-      nodes: [
-        { id: entityId.value, label: 'Person', name: '测试用户' },
-        { id: 'skill-1', label: 'Skill', name: 'Java' },
-        { id: 'skill-2', label: 'Skill', name: 'Vue 3' },
-        { id: 'skill-3', label: 'Skill', name: 'Spring Boot' },
-        { id: 'skill-4', label: 'Skill', name: 'MySQL' }
-      ],
-      edges: [
-        { source: entityId.value, target: 'skill-1', label: 'HAS_SKILL' },
-        { source: entityId.value, target: 'skill-2', label: 'HAS_SKILL' },
-        { source: entityId.value, target: 'skill-3', label: 'HAS_SKILL' },
-        { source: entityId.value, target: 'skill-4', label: 'HAS_SKILL' }
-      ]
-    }
-    renderGraph(mockData)
+    await new Promise(resolve => setTimeout(resolve, 600))
+    await nextTick()
+    await renderGraph(buildMockGraphData({ graphType: graphType.value, entityId: id }))
     ElMessage.success('图谱加载成功')
   } catch (error) {
     ElMessage.error('图谱加载失败')
+  } finally {
+    loading.value = false
   }
 }
 
-const renderGraph = (graphData) => {
+const buildMockGraphData = ({ graphType, entityId }) => {
+  if (graphType === 'person') {
+    return {
+      nodes: [
+        { id: entityId, label: 'Person', name: entityId },
+        { id: 'skill-java', label: 'Skill', name: 'Java' },
+        { id: 'skill-spring', label: 'Skill', name: 'Spring Boot' },
+        { id: 'skill-mysql', label: 'Skill', name: 'MySQL' },
+        { id: 'skill-vue', label: 'Skill', name: 'Vue 3' }
+      ],
+      edges: [
+        { id: `${entityId}-java`, source: entityId, target: 'skill-java', label: 'HAS_SKILL' },
+        { id: `${entityId}-spring`, source: entityId, target: 'skill-spring', label: 'HAS_SKILL' },
+        { id: `${entityId}-mysql`, source: entityId, target: 'skill-mysql', label: 'HAS_SKILL' },
+        { id: `${entityId}-vue`, source: entityId, target: 'skill-vue', label: 'HAS_SKILL' }
+      ]
+    }
+  }
+
+  return {
+    nodes: [
+      { id: entityId, label: 'Requirement', name: entityId },
+      { id: 'skill-java', label: 'Skill', name: 'Java' },
+      { id: 'skill-spring', label: 'Skill', name: 'Spring Boot' },
+      { id: 'skill-docker', label: 'Skill', name: 'Docker' },
+      { id: 'skill-k8s', label: 'Skill', name: 'Kubernetes' }
+    ],
+    edges: [
+      { id: `${entityId}-java`, source: entityId, target: 'skill-java', label: 'REQUIRES' },
+      { id: `${entityId}-spring`, source: entityId, target: 'skill-spring', label: 'REQUIRES' },
+      { id: `${entityId}-docker`, source: entityId, target: 'skill-docker', label: 'REQUIRES' },
+      { id: `${entityId}-k8s`, source: entityId, target: 'skill-k8s', label: 'REQUIRES' }
+    ]
+  }
+}
+
+const renderGraph = async (graphData) => {
   if (graph.value) {
     graph.value.destroy()
+    graph.value = null
   }
-  
+
   if (!graphRef.value) return
 
-  const container = graphRef.value
-  const width = container.clientWidth || 800
-  const height = container.clientHeight || 600
-  
-  // 创建 G6 图实例
-  graph.value = new G6.Graph({
-    container: container,
-    width: width,
-    height: height,
-    modes: {
-      default: ['drag-canvas', 'zoom-canvas', 'drag-node']
-    },
-    layout: {
-      type: currentLayout.value,
-      force: {
-        repulsion: 1000,
-        edgeLength: 100
-      },
-      hierarchical: {
-        direction: 'TB',
-        sortByComboSize: true
-      }
-    },
-    defaultNode: {
-      size: 30,
-      style: {
-        fill: '#C6E5FF',
-        stroke: '#1890FF',
-        lineWidth: 2
-      },
-      labelCfg: {
-        style: {
-          fill: '#333',
-          fontSize: 12
+  graph.value = new Graph({
+    container: graphRef.value,
+    autoResize: true,
+    data: graphData,
+    behaviors: [{ type: 'drag-canvas' }, { type: 'zoom-canvas' }, { type: 'drag-element' }],
+    layout: currentLayout.value === 'force'
+      ? { type: 'force', preventOverlap: true, linkDistance: 120 }
+      : { type: 'dagre', rankdir: 'TB' },
+    node: {
+      style: (d) => {
+        const base = {
+          size: 28,
+          labelText: d.name || d.id,
+          labelPlacement: 'bottom',
+          labelOffsetY: 8,
+          labelFill: '#333',
+          labelFontSize: 12,
+          lineWidth: 2,
+          fill: '#C6E5FF',
+          stroke: '#1890FF'
         }
+        if (d.label === 'Person') return { ...base, fill: '#FFE58F', stroke: '#FAAD14' }
+        if (d.label === 'Skill') return { ...base, fill: '#B7EB8F', stroke: '#52C41A' }
+        if (d.label === 'Requirement') return { ...base, fill: '#FFD6E7', stroke: '#EB2F96' }
+        return base
       }
     },
-    defaultEdge: {
-      style: {
-        stroke: '#999',
-        lineWidth: 1,
-        endArrow: true
-      },
-      labelCfg: {
-        style: {
-          fill: '#666',
-          fontSize: 10
-        }
-      }
+    edge: {
+      style: (d) => ({
+        stroke: d.label === 'HAS_SKILL' ? '#1890FF' : '#999',
+        lineWidth: d.label === 'HAS_SKILL' ? 2 : 1,
+        endArrow: true,
+        labelText: d.label || '',
+        labelFill: '#666',
+        labelFontSize: 10
+      })
     }
   })
-  
-  // 处理节点样式
-  graphData.nodes.forEach(node => {
-    if (node.label === 'Person') {
-      node.style = {
-        fill: '#FFE58F',
-        stroke: '#FAAD14',
-        lineWidth: 2
-      }
-    } else if (node.label === 'Skill') {
-      node.style = {
-        fill: '#B7EB8F',
-        stroke: '#52C41A',
-        lineWidth: 2
-      }
-    }
-  })
-  
-  // 处理边样式
-  graphData.edges.forEach(edge => {
-    if (edge.label === 'HAS_SKILL') {
-      edge.style = {
-        stroke: '#1890FF',
-        lineWidth: 2,
-        endArrow: true
-      }
-    }
-  })
-  
-  // 加载数据并渲染
-  graph.value.data(graphData)
-  graph.value.render()
+
+  await graph.value.render()
 }
 
 const zoomIn = () => {
   if (graph.value) {
-    graph.value.zoom(1.2)
+    void graph.value.zoomBy(1.2)
   }
 }
 
 const zoomOut = () => {
   if (graph.value) {
-    graph.value.zoom(0.8)
+    void graph.value.zoomBy(0.8)
   }
 }
 
 const resetLayout = () => {
   if (graph.value) {
-    graph.value.fitView()
+    void graph.value.fitView()
   }
 }
 
 const switchLayout = () => {
   if (currentLayout.value === 'force') {
-    currentLayout.value = 'hierarchical'
+    currentLayout.value = 'dagre'
   } else {
     currentLayout.value = 'force'
   }
   loadGraph()
 }
 
-const handleResize = () => {
-  if (!graph.value || !graphRef.value) return
-  graph.value.changeSize(graphRef.value.clientWidth, graphRef.value.clientHeight)
-  graph.value.fitView()
-}
-
 onMounted(() => {
   loadGraph()
-  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   if (graph.value) {
     graph.value.destroy()
+    graph.value = null
   }
-  window.removeEventListener('resize', handleResize)
 })
 </script>
 
