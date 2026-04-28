@@ -48,25 +48,6 @@ const isAdmin = ref(false)
 
 const isLoginPage = computed(() => route.path === '/login')
 
-watch(() => route.path, (newPath) => {
-  const path = newPath.split('/')[1] || 'home'
-  activeMenu.value = path
-  checkLoginStatus()
-}, { immediate: true })
-
-const handleMenuSelect = (key) => {
-  router.push(`/${key}`)
-}
-
-const handleLogout = () => {
-  // 清除登录状态
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-  isLoggedIn.value = false
-  isAdmin.value = false
-  router.push('/login')
-}
-
 // 检查登录状态
 const checkLoginStatus = () => {
   const token = localStorage.getItem('token')
@@ -84,6 +65,25 @@ const checkLoginStatus = () => {
     isLoggedIn.value = false
     isAdmin.value = false
   }
+}
+
+watch(() => route.path, (newPath) => {
+  const path = newPath.split('/')[1] || 'home'
+  activeMenu.value = path
+  checkLoginStatus()
+}, { immediate: true })
+
+const handleMenuSelect = (key) => {
+  router.push(`/${key}`)
+}
+
+const handleLogout = () => {
+  // 清除登录状态
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  isLoggedIn.value = false
+  isAdmin.value = false
+  router.push('/login')
 }
 
 onMounted(() => {
