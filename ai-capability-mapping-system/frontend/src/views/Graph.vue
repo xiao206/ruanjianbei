@@ -110,7 +110,6 @@ const renderGraph = async (graphData) => {
     ? {
         type: 'force',
         animation: true,
-        enableWorker: true,
         iterations: 120,
         preventOverlap: false,
         linkDistance: 80
@@ -118,7 +117,6 @@ const renderGraph = async (graphData) => {
     : {
         type: 'force',
         animation: true,
-        enableWorker: true,
         iterations: 200,
         preventOverlap: true,
         collideStrength: 0.5,
